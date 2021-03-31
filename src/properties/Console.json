@@ -1,0 +1,63 @@
+{
+    "global":{
+        "name" : "Willburr",
+        "version" : "1.1",
+        "author" : "DGC"
+    },
+
+    "settings":{
+        "saveOnExit" : true
+    },
+
+    "corpus" : {
+        "EN" : {
+            "help" : {
+                "global" : {
+                    "title" : "Willburr Help.",
+                    "description" : "Willburr allows one to share static content over a network. Commands are in place to facilitate the creation, deletion, modification and saving of the application state.",
+                    "example" : "[command] [function] [parameters...]",
+                    "actions" : [
+                        "web    : Allows one to create, manipulate or execute instances of servers.",
+                        "string : Allows one to create, display or change parent servers of string instances.",
+                        "app    : Concerned with loading, saving or clearing the current application data."
+                    ]
+                },
+                "web" : {
+                    "title" : "Web Command",
+                    "description" : "Principal object containing core information used for running instances of a server.",
+                    "example" : "web [function] parameters...",
+                    "actions" : [
+                        "display : Display webserver data, prints out the global webserver data if a name is not supplied.",
+                        "create  : Create a new Server.",
+                        "delete  : Individually delete a Server from the global datastore.",
+                        "run     : Run a named webserver instance.",
+                        "stop    : Halt execution of a webserver instance."
+                    ]
+                },
+                "string" : {
+                    "title" : "String Command",
+                    "description" : "A minimal but important object containing core information used for hosting static content.",
+                    "example" : "string [function] parameters...",
+                    "actions" : [
+                        "create  : Initiates a prompt session which allows a user to create a string and assign them to a host or save them globally.",
+                        "display : Prints a readable message containing core information about a String object when provided with a name, Summarizes the global String datastore otherwise.",
+                        "assign  : Assigns a String to a Server, syntax used should be: string assign [...string_name] [server_name]"
+                    ]
+                },
+                "app" : {
+                    "title" : "App Command",
+                    "description" : "Provides access to functions concerned with application data such as loading configurations, saving them as well as clearing datastores.",
+                    "example" : "app [function] parameters...",
+                    "actions" : [
+                        "load  : Reads a file and attempts to read it as a configuration file. filetype must be json",
+                        "save  : Saves the global datastore. providing a valid file path will write it into said file, stores resulting file in /src/config if a path is not specified.",
+                        "clear : Clears the global datastores, specifying neither web or string will cause this command to clear all datastores."
+                    ]
+                }
+            },
+            "errors" : {
+                "invalidCommand" : "is not a valid command."
+            }
+        }
+    }
+}

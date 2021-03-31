@@ -1,0 +1,20 @@
+{
+    "willburr-web" : {
+        "port" : 55432,
+
+        "modules" : {
+            "filehub" : {
+                "enabled" : true,
+                "rootDir" : "C:/Users/Manny/Desktop/test-root",
+                "thumbnailCache" : "../../static/filehub/root",
+                "verboseFileType" : [ "mp3" , "wav" , "ogg" , "m4a" , "flac" , "mp4" , "mkv" ],
+                "supportedMedia" : {
+                    "audio" : ["mp3" , "m4a" , "flac" , "wav"]
+                }
+            },
+            "smalltalk" : {
+                "enabled" : false
+            }
+        }
+    }
+}

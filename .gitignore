@@ -1,0 +1,8 @@
+.vscode/
+node_modules/
+
+src/profiles/*
+
+#static builds (web-modules, etc)
+static
+src/bin/

@@ -1,0 +1,26 @@
+{
+  "name": "willburr",
+  "version": "1.1.0",
+  "description": "A small CLI application which allows users to share contents and materials over a network.",
+  "main": "src/index.js",
+  "scripts": {
+    "console": "node --experimental-modules src/index.mjs --console",
+    "console-dev": "nodemon --experimental-modules src/index.mjs --console",
+    "web": "node --experimental-modules src/index.mjs --web",
+    "web-dev": "nodemon --experimental-modules src/index.mjs --web"
+  },
+  "author": "Emmanuel A.",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "chalk": "*",
+    "cors": "*",
+    "express": "^4.17.1",
+    "ffmetadata": "^1.7.0",
+    "prompt-sync": "^4.2.0",
+    "thumbsupply": "^0.4.0"
+  }
+}
