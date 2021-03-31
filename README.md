@@ -1,5 +1,22 @@
 # Willburr
-Written entirely using Javascript, Willburr is a small CLI application which allows users to share contents and materials over a network.
+A set of tools aimed for educators and those who need a fast and easy way to disperse files across a local network.
+
+Initially, the only tool provided was a CLI app which only allows users to share mirrored copies of websites.
+
+I've made some modules(web-apps) for the server which extends some functionalities of its functionalities, they are...
+
+*Sharing of static copies of mirrored websites.
+*Sharing of actual files(such as media, documents and just about anything).
+
+So for now, without modules, you're basically stuck with nothing but the CLI app, which admittedly is a bit clunky at the moment.
+
+Head Over to these links to view some of the modules that I was talking about.
+
+[FilHub](http://github.com/MannyWeeb/filehub)
+[Willburr-Web](http://github.com/MannyWeeb/willburr-web)
+
+
+## CLI App
 
 **Command Overview:**
 The application provides a relatively small set of commands for managing shared resources through user-made servers.
