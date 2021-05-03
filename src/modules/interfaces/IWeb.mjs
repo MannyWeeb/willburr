@@ -1,5 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
+import path from "path";
 
 import Web from "../structs/Web.mjs";
 import { utils } from "./IConsole.mjs";
@@ -46,7 +47,7 @@ export default class IWeb {
             server.use("/fh/static/content", express.static(`${ROOT}`));
             
             server.use("/fh" , express.static("static/filehub"));
-            server.get("/fh/*",(req,res)=>{
+            server.get("/fh/*",(_,res)=>{
                 res.sendFile(path.resolve("static/filehub/index.html"));
             });
             
