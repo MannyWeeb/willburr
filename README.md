@@ -1,20 +1,18 @@
 # Willburr
-A set of tools aimed for educators and those who need a fast and easy way to disperse files across a local network.
 
-Initially, the only tool provided was a CLI app which only allows users to share mirrored copies of websites.
+A Node.js Server which is aimed for educators and those who need a fast and easy way to disperse files across a network,
+While the Server itself does not offer any feature that achieves the said goal anymore (CLI app is now decoupled with main server),
+It lends itself to serving web-applications that mainly provide these services instead.
 
-I've made some modules(web-apps) for the server which extends some functionalities of its functionalities, they are...
+Web-apps available:
 
-*Sharing of static copies of mirrored websites.
-*Sharing of actual files(such as media, documents and just about anything).
+**[FileHub](http://github.com/MannyWeeb/filehub): Allows hosting of files and folders**
 
-So for now, without modules, you're basically stuck with nothing but the CLI app, which admittedly is a bit clunky at the moment.
+**[Willburr-Web](http://github.com/MannyWeeb/willburr-web): Allows hosting of mirrored copies of websites**
 
-Head Over to these links to view some of the modules that I was talking about.
+*Note: Willburr-web is actually the browser-port of the original CLI built-into the server.*
 
-[FilHub](http://github.com/MannyWeeb/filehub)
-[Willburr-Web](http://github.com/MannyWeeb/willburr-web)
-
+These web-apps should have a guide with them to help you get acquainted with how they work.
 
 ## CLI App
 

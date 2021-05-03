@@ -1,14 +1,17 @@
 import express from "express";
 import ffmetadata from "ffmetadata";
-import thumbsupply from "thumbsupply";
 import fs from "fs";
+import os from "os";
 
-import config from "../properties/config.json";
-import { resolveSoa } from "dns";
+import config from "../../config.json";
 
 const routerConfig = config["willburr-web"].modules.filehub;
 
 const ROOT = routerConfig.rootDir;
+const VERBOSEMIMETYPE = [ "mp3" , "wav" , "ogg" , "m4a" , "flac" , "mp4" , "mkv" ]; //a ffmpeg.read() is ran when a filetype's mimetype is included in this list.
+const SUPPORTEDMEDIA = {
+    audio : ["mp3" , "m4a" , "flac" , "wav"] //Searches for album cover in it's parent directory if the file's mimetype is included in this list.
+}
 
 let app = express.Router();
 
@@ -41,9 +44,17 @@ app.get("/getData", (_, res) => {
 
         })
         .then((data) => {
-            data.type = "folder";
-            data.path = "/";
-            res.status(200).json(data);
+            const _stat = fs.statSync(ROOT);
+            res.status(200).json({
+                ...data,
+                type: _stat.isFile() ? "file" : "dir",
+                path: "/",
+                timestamps: {
+                    created: _stat.ctime,
+                    accessed: _stat.atime,
+                    modified: _stat.mtime
+                }
+            });
         });
 });
 
@@ -58,14 +69,13 @@ app.get("/getMetadata", (req, res) => {
         error: "Failed to fetch metadata",
         reason: "Unknown error, Please report this to someone..."
     }
-
-    const _path = `${ROOT}/${decodeURI(p).replace("%26", "&")}`;
+    const _path = `${ROOT}/${p}`;
     fs.stat(_path, (err, _stat) => {
         if (err) {
             errBody.reason = "File not found.";
             res.status(400).json(errBody);
         } else {
-            const ffmpegReadable = routerConfig.verboseFileType.indexOf(p.substring(p.lastIndexOf(".") + 1)) !== -1;
+            const ffmpegReadable = VERBOSEMIMETYPE.indexOf(p.substring(p.lastIndexOf(".") + 1)) !== -1;
 
             if (_stat.isFile() && ffmpegReadable) {
                 readMetadata(_path)
@@ -95,7 +105,7 @@ app.get("/getMetadata", (req, res) => {
 app.get("/getThumbnail", (req, res) => {
     let { p } = req.query;
 
-    const _path = `${ROOT}/${decodeURI(p).replace("%26", "&")}`;
+    const _path = `${ROOT}/${decodeURIComponent(p)}`;
 
     fs.stat(_path, (err, _stats) => {
 
@@ -116,7 +126,7 @@ app.get("/getThumbnail", (req, res) => {
             if (_stats.isFile()) {
                 const fileExt = _path.substring(_path.lastIndexOf(".") + 1);
 
-                if (routerConfig.supportedMedia.audio.indexOf(fileExt) !== -1) {
+                if (SUPPORTEDMEDIA.audio.indexOf(fileExt) !== -1) {
                     //Look up parent dir if it contains a folder or cover img
                     const parentDir = _path.substring(0, _path.lastIndexOf("/"));
 
@@ -173,7 +183,30 @@ app.get("/getThumbnail", (req, res) => {
 
 });
 
+app.get("/getServerInfo", (_, res)=>{    
+    let cpus = os.cpus();
+    let networkInterfaces = [];
+    
+    Object.entries(os.networkInterfaces()).forEach((entry)=>{
+        const [ name , interfaces ] = entry;
 
+        for(const i of interfaces){
+            const { family , internal , address} = i;
+            if(!internal && family === "IPv4"){
+                networkInterfaces.push({name , address});
+            }
+        }
+    });
+
+    res.status(200).json({
+        hostInfo : {
+            name : os.hostname(),
+            cpu  : `${cpus.length} x ${cpus[0].model}`,
+            mem  : os.totalmem()
+        },
+        networkInterfaces
+    });
+});
 
 /* Helper methods */
 
@@ -196,7 +229,6 @@ function recursiveRead(root) {
                     try {
                         const _path = `${root}/${filename}`;
                         const _stat = fs.statSync(_path);
-
 
                         let instance = {
                             type: _stat.isFile() ? "file" : "dir",

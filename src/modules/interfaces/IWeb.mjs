@@ -3,8 +3,9 @@ import bodyParser from "body-parser";
 
 import Web from "../structs/Web.mjs";
 import { utils } from "./IConsole.mjs";
-import config from "../../properties/config.json";
+import config from "../../../config.json";
 import App from "../../App.mjs";
+
 
 //Routers (for web-modules)
 import filehubRouter from "../../routers/filehub.mjs";
@@ -33,21 +34,26 @@ export default class IWeb {
             req.next();
         });
 
-        server.use(express.static("static/willburr-web"));
-        server.use("/api", this.handleAPI());
 
         //Module Routers:
         const moduleConfig = config["willburr-web"].modules;
 
         if (moduleConfig.filehub.enabled) {
             const ROOT = moduleConfig.filehub.rootDir;
-
-            server.use("/fh" , express.static("static/filehub"))
+           
             server.use("/fh/api", filehubRouter);
             server.use("/fh/static/thumb", express.static(`${ROOT}/thumbcache`));
             server.use("/fh/static/content", express.static(`${ROOT}`));
+            
+            server.use("/fh" , express.static("static/filehub"));
+            server.get("/fh/*",(req,res)=>{
+                res.sendFile(path.resolve("static/filehub/index.html"));
+            });
+            
         }
 
+        server.use(express.static("static/willburr-web"));
+        server.use("/api", this.handleAPI());
 
 
         this.webServer.run((success, data) => {
