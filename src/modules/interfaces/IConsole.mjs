@@ -17,7 +17,6 @@ let LANG = "EN";
 const { global , settings , corpus } = texts;
 const { help , errors } = corpus[LANG] || corpus["EN"];
 
-
 class IConsole{
 
     constructor(){
@@ -28,7 +27,7 @@ class IConsole{
             output : process.stdout,
             removeHistoryDuplicates : true,
             prompt : ">>",
-        });
+        });+
         
         
         this.rl.addListener("line" , this.parse);
@@ -305,9 +304,9 @@ class IConsole{
                     }
                     
                     //Inform user?
-                    _server.run((success , data) => {
+                    _server.run((success , err) => {
                         if(success){
-                            const { elapsed , bindings } = data;
+                            const { elapsed , bindings } = success;
                             let message = [
                                 `Time taken(in seconds): ${elapsed}s`,
                                 "\n",
@@ -335,7 +334,7 @@ class IConsole{
                                 message
                             },true);
                         }else{
-                            simpleError(data);
+                            simpleError({error : `Server ${serverName} failed to run.`, reason : err});
                         }
                     });
                 }
@@ -371,7 +370,19 @@ class IConsole{
                         return;
                     }
                     
-                    _server.stop((elapsed)=>simpleSuccess({header : `Server ${serverName} has been successfully stopped.` , message : `Time Taken(in seconds): ${elapsed}`},true));
+                    _server.stop((elapsed, err)=>{
+                        if(elapsed){
+                            simpleSuccess({
+                                header : `Server ${serverName} has been successfully stopped.`,
+                                message : `Time Taken(in seconds): ${elapsed}`
+                            }, true);
+                        }else{
+                            simpleError({
+                                error : `Failed to stop server ${serverName}`,
+                                reason : err
+                            }, true);
+                        }
+                    });
                 }
                 
                 clear();
@@ -564,17 +575,16 @@ class IConsole{
                         chalk.yellowBright(`${strings.length} unique String object${strings.length > 1 ? "s" : ""} found.`),
                         "\n"
                     )
-                    for(const string of strings){
-                        for(const endpoint in string){
-                            const { directory , indexFile } = string[endpoint];
-                            
-                            message.push(
-                                chalk.yellowBright(`[${endpoint}]`),
-                                `${chalk.greenBright("Directory")}    : ${directory}`,
-                                `${chalk.greenBright("Index File/s")} : ${indexFile}`,    
-                                "\n"
-                            );
-                        }
+                    for(const endpoint of strings){
+                        const [ _ , value ] = Object.entries(this.app.strings[endpoint])[0];
+                        const { directory , indexFile } = value;
+                        
+                        message.push(
+                            chalk.yellowBright(`[${endpoint}]`),
+                            `${chalk.greenBright("Directory")}    : ${directory}`,
+                            `${chalk.greenBright("Index File/s")} : ${indexFile}`,    
+                            "\n"
+                        );
                     }
                 }else{
                     message.push(
@@ -652,21 +662,21 @@ class IConsole{
 
                         if(response["restart"] === "y"){
                             server.stop(()=>{
-                                if(server.addString(string)){
-                                    //String is now being hosted on Server maria.   
+                                server.addString(string)
+                                .then(()=> {
                                     server.run(()=>{
-                                        console.log(chalk.greenBright(`| String assignment successful.\n| `)+chalk.whiteBright(`String ${stringName} is now being hosted on Server ${serverName}.` ));
+                                        console.log(chalk.greenBright(`| String assignment successful.\n| `)+chalk.whiteBright(`String ${stringName} is now being hosted on Server ${serverName}.`));
                                     });
-                                }
+                                })
+                                .catch((err)=>{
+                                    console.log(chalk.redBright(`| Failed to assign String ${stringName} to Server ${serverName}.` + chalk.yellowBright(err)))
+                                })
                             });
                         }
                     }else{
-
-                        if(server.addString(string)){
-                            console.log(chalk.greenBright("| String assignment successful.\n| ")+chalk.whiteBright(`Server ${serverName} will be hosting String ${stringName} on it's next subsequent runs.`));
-                        }else{
-                            console.log(chalk.redBright(`| Failed to assign String ${stringName} to a server.\n| `)+chalk.yellowBright(`Server ${serverName} already hosts a similarly named String.`));
-                        }
+                        server.addString(string)
+                        .then(()=> console.log(chalk.greenBright("| String assignment successful.\n| ")+chalk.whiteBright(`Server ${serverName} will be hosting String ${stringName} on it's next subsequent runs.`))
+                        .catch((err)=> console.log(chalk.redBright(`| Failed to assign String ${stringName} to a server.\n| `)+chalk.yellowBright(err))));
                     }
                 }
 
@@ -674,7 +684,6 @@ class IConsole{
                 for(const stringName of stringNames){
                     _assignString(stringName);
                 }
-
             }break;
 
             case "create" : {
@@ -748,7 +757,7 @@ class IConsole{
         
                         if(host === "global"){
                             if(!this.app.strings[endpoint]){
-                                this.app.strings[endpoint] = obj;
+                                this.app.strings[endpoint] = _obj;
                                 console.log(chalk.blueBright("| ")+chalk.greenBright("*String is inserted into the global datastore."));
                             }else{
                                 console.log(chalk.blueBright("| ") + chalk.redBright(`Failed to add String ${endpoint} to the global datastore, possible duplicate found.`))
@@ -758,11 +767,9 @@ class IConsole{
 
                         let server = this.app.servers[host];
                         if(server !== null){
-                            if(server.addString(_obj)){
-                                console.log(chalk.blueBright("| ")+chalk.greenBright(`*String successfully added to Server ${server.name}'s string list.`));
-                            }else{
-                                console.log(chalk.blueBright("| ")+chalk.redBright(`Failed to add String to Server ${server.name}'s hosted contents, A String with the same endpoint name is already assigned to it.`));
-                            }
+                            server.addString(_obj)
+                            .then(()=> console.log(chalk.blueBright("| ")+chalk.greenBright(`*String successfully added to Server ${server.name}'s string list.`)))
+                            .catch((err)=> console.log(chalk.blueBright("| ")+chalk.redBright(`Failed to add String to Server ${server.name}'s hosted contents, ${err}`)));
                         }else{
                             console.log(chalk.blueBright("|") + chalk.redBright(`Server ${host} does not exist`));
                         }

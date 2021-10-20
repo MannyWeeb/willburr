@@ -1,5 +1,4 @@
 import express from "express";
-import bodyParser from "body-parser";
 import path from "path";
 
 import Web from "../structs/Web.mjs";
@@ -17,15 +16,22 @@ export default class IWeb {
         this.app = new App();
 
         this.app.load(null, () => {
-            //Default profile loaded.  
+            //Default profile loaded.
         });
+
+        //Autosave, idk why I have this but ehh..
+        setInterval(()=> {
+            this.app.save(null, ()=>{
+                console.log(`Data saved on ${new Date().toTimeString()}`);
+            });
+        },60000);
 
         this.webServer = new Web("willburr-web", config["willburr-web"].port || 80);
 
         let { server } = this.webServer;
 
-        server.use(bodyParser.json());
-        server.use(bodyParser.urlencoded({ extended: false }));
+        server.use(express.json());
+        server.use(express.urlencoded({ extended: false }));
 
         //Temp
         server.use((req, res) => {
@@ -35,188 +41,155 @@ export default class IWeb {
             req.next();
         });
 
-
         //Module Routers:
         const moduleConfig = config["willburr-web"].modules;
 
         if (moduleConfig.filehub.enabled) {
             const ROOT = moduleConfig.filehub.rootDir;
-           
+
             server.use("/fh/api", filehubRouter);
             server.use("/fh/static/thumb", express.static(`${ROOT}/thumbcache`));
             server.use("/fh/static/content", express.static(`${ROOT}`));
-            
-            server.use("/fh" , express.static("static/filehub"));
-            server.get("/fh/*",(_,res)=>{
+            server.use("/fh", express.static("static/filehub"));
+            server.get("/fh/*", (_, res) => {
                 res.sendFile(path.resolve("static/filehub/index.html"));
             });
-            
         }
 
         server.use(express.static("static/willburr-web"));
-        server.use("/api", this.handleAPI());
+        server.use("/", this.handleAPI());
 
-
-        this.webServer.run((success, data) => {
-            if (success) {
+        this.webServer.run((data, err) => {
+            if (data) {
+                const { elapsed } = data;
                 utils.simpleSuccess({
                     header: `${this.webServer.name} is now running on port ${this.webServer.port}`,
-                    message: `Elapsed Time: ${data.elapsed}s.`
+                    message: `Elapsed Time: ${elapsed}s.`
                 });
             } else {
-                utils.simpleError(data);
+                utils.simpleError({ error: "Willburr-Web failed to run.", reason: err || null });
             }
         });
-
     }
 
     handleAPI() {
-        let api = express.Router();
-
-        api.get("/getData", (_, res) => {
-            const { servers, strings } = this.app;
-
-            res.status(200).json({
-                servers,
-                strings,
+        let _sr = (response, res, err) => {
+            this.app.save(null,()=>{
+                response.status(!err ? 200 : 400).json({
+                    result: res,
+                    error: err
+                });
             });
-        });
+        }
 
-        api.post("/serverControl", (req, res) => {
-            const { action, target } = req.body;
+        let paramFunctions = {
+            "toggleServer" : ["action", "target"],
+            "createServer" : ["name", "port"],
+            "deleteServer" : ["name"],
+            "createString" : ["name", "server", "directory"],
+            "deleteString" : ["name", "server"]
+        }
 
-            const { servers } = this.app;
-
-            if (!action || (action !== "run" && action !== "stop")) {
-                res.status(400).json({ error: "Missing Field", message: "Missing or invalid Field 'action' in request body" });
-                return;
-            }
-
-            if (!servers[target]) {
-                res.status(404).json({ error: "NOT_FOUND", message: `Server ${target} was not found.` });
-            } else {
-                let _server = servers[target];
-
-                _server[action]((success, result) => {
-                    if (action === "stop") {
-                        this.app.save(null, () => {
-                            res.status(success ? 200 : 400).json({ server: _server, result });
-                        });
-
-                    } else {
-                        res.status(success ? 200 : 400).json({ server: _server, result });
+        return express.Router().post("/", (req, res) => {
+            const { action, params } = req.body;
+            const { servers, strings } = this.app;
+            if (action) {
+                if(Object.keys(paramFunctions).indexOf(action) !== -1){
+                    const [ allowedParams, paramKeys ] = [paramFunctions[action], Object.keys(params)];
+                    let missing = allowedParams.filter((v)=> paramKeys.indexOf(v) === -1);
+                    if(missing.length > 0){
+                        _sr(res, null, `Parameter${allowedParams.length > 1 ? "s" : ""} not supplied: ${missing}`);
+                        return;
                     }
-                });
-            }
-        });
+                }
+                switch (action) {
+                    case "getData"      : _sr(res, { servers, strings }); break;
+                    case "toggleServer" : {
+                        const { action, target } = params;
+                        const { servers } = this.app;
 
-        api.post("/server", (req, res) => {
-            let { name, port } = req.body;
+                        let validAction = ["run", "stop"].indexOf(action.toLowerCase());
 
-            let errors = [];
+                        if (!action && !validAction) {
+                            _sr(res, null, "Missing or invalid field 'action' in request body.");
+                        } else if (!servers[target]) {
+                            _sr(res, null, `Server \'${target}\' was not found.`);
+                        } else {
+                            let _server = servers[target];
+                            _server[action]((_, err) => {
+                                _sr(res, _server , err);
+                            });
+                        }
+                    } break;
+                    case "createServer" : {
+                        let { name, port } = params;
+                        let errors = [];
 
-            if (!name || !port) {
-                errors.push("Required fields are missing (name,port)");
+                        if (!name || !port) {
+                            errors.push("Required fields are missing (name,port)");
+                        } else {
+                            port = Number(port);
+
+                            if (this.app.servers[name.trim()]) errors.push("Server name is already taken!");
+
+                            if (port == NaN) errors.push("Port should be a number!");
+
+                            if (!(port >= 0 && port <= 65535)) errors.push("Out of range! please use any port between 0 to 65535.");
+                        }
+
+                        if (errors.length === 0) {
+                            let server = new Web(name, port, new Set());
+                            this.app.servers[name] = server;
+                            _sr(res, { server });
+                        } else {
+                            _sr(res, null, errors);
+                        }
+                    } break;
+                    case "deleteServer" : {
+                        const { name } = params;
+                        let server = this.app.servers[name];
+                        if (!server) {
+                            _sr(res, null, `Server \'${name}\' does not exist`);
+                        } else {
+                            server.stop(() => {
+                                delete this.app.servers[name];
+                                _sr(res, true);
+                            });
+                        }
+                    }break;
+                    case "createString" : {
+                        const { server, name, directory } = params;
+                        let _server = this.app.servers[server];
+
+                        if (!_server){
+                            _sr(res, null, `Server \'${server}\' does not exist.`);
+                        }else{
+                            let temp = { directory, indexFile : ["index.htm", "index.html"] };
+                            _server.addString({[name] : temp})
+                            .then(()=> _sr(res,temp), (v)=> _sr(res,null, v));
+                        }
+                    }break;
+                    case "deleteString" : {
+                        const { server, name } = params;
+                        let _server = this.app.servers[server];
+
+                        if(_server){
+                            if(_server.removeString(name)){
+                                delete _server.strings[name];
+                                _sr(res, true);
+                            }else{
+                                _sr(res, null, `Endpoint \'${name}\' does not exist within Server \'${server}\'`);
+                            }
+                            
+                        }else _sr(res, null, `Server \'${server}\' does not exist`);
+                    }break;
+                    default : {
+                        _sr(res, null, `Unknown action named \'${action}\'.`);
+                    }
+                }
             } else {
-                port = Number(port);
-
-                if (this.app.servers[name.trim()]) errors.push("Server name is already taken!");
-
-                if (port == NaN) errors.push("Port should be a number!");
-
-                if (!(port >= 0 && port <= 65535)) errors.push("Out of range! please use any port between 0 to 65535.");
-            }
-
-            if (errors.length === 0) {
-                let server = new Web(name, port, new Set());
-                this.app.servers[name] = server;
-                res.status(200).json({ server });
-            } else {
-                res.status(400).json({ errors });
-            }
-
-        });
-        ;
-        api.delete("/server", (req, res) => {
-            const { name } = req.body;
-            let server = this.app.servers[name];
-            if (!server) {
-                res.status(400).json({
-                    error: "Server not found",
-                    reason: !name ? "No server name supplied" : `Server ${name} does not exist`
-                })
-            } else {
-                server.stop(() => {
-                    delete this.app.servers[name];
-                    res.status(200).send("Success");
-                });
+                _sr(res, null, "Missing \'action\' field within the request body.");
             }
         });
-
-        api.post("/string", (req, res) => {
-            const { server, name, directory } = req.body;
-
-            let _server = this.app.servers[server];
-
-            try {
-
-                if (!_server) throw (`Host Server does not exist or was left blank.`);
-
-                if (!name) throw (`Endpoint name cannot be empty!`);
-
-                if (!directory) throw (`Static directory should not be null!`);
-
-                let endpoint = {};
-
-                endpoint[name] = { directory, indexFile: ["index.htm", "index.html"] }
-
-                if (_server.addString(endpoint)) {
-                    res.status(200).send(endpoint);
-                } else {
-                    throw (`Duplicate endpoint name found.`);
-                }
-
-            } catch (err) {
-                res.status(400).json({
-                    error: `Failed to create endpoint /${name}`,
-                    reason: err
-                })
-            }
-        });
-
-        api.delete("/string", (req, res) => {
-            const { server, name } = req.body;
-
-            try {
-                let _server = this.app.servers[server];
-
-                if (!_server) {
-                    throw (!server ? "No server name supplied" : `Server ${server} does not exist`);
-                }
-
-                if (!name) {
-                    throw ("Endpoint name cannot be null!");
-                }
-
-                if (_server.strings[name]) {
-                    delete _server.strings[name];
-                    res.status(200).send("success");
-                } else {
-                    throw (`Server ${server} does not have an endpoint named ${name}`);
-                }
-
-            } catch (err) {
-                res.status(400).json({
-                    error: `Failed to create endpoint`,
-                    reason: err
-                });
-            }
-        });
-
-        return api;
     }
-
 }
-
-
-

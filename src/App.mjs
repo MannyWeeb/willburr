@@ -44,12 +44,9 @@ export default class App {
 
                 //Parse servers array
                 for (const server of config.servers) {
-
                     //Checks for any duplicate already loaded in the global datastore.
                     if (Object.entries(this.servers).length !== 0) {
                         for (const _server of entries) {
-
-
                             if (server.name === _server) {
                                 if (noDuplicate) throw { error: "Duplicate value found in global datastore.", reason: "Two or more server entries were found to have identical names." };
                                 serverRejects++;

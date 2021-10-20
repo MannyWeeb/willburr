@@ -1,0 +1,150 @@
+{
+    "servers": [
+        {
+            "name": "docs",
+            "port": 80,
+            "strings": [
+                {
+                    "w3c": {
+                        "directory": "C:\\My Web Sites\\www.w3schools.com",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "spring": {
+                        "directory": "C:\\My Web Sites\\springframework\\spring\\docs\\current\\javadoc-api",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "openjfx": {
+                        "directory": "C:\\My Web Sites\\openjfx-11.0.2",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "lamden": {
+                        "directory": "C:\\My Web Sites\\lamden",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "jfx": {
+                        "directory": "C:\\My Web Sites\\jfx-8u221",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "jdk": {
+                        "directory": "C:\\My Web Sites\\jdk-8u241",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "go": {
+                        "directory": "C:\\My Web Sites\\gobyexample",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "web3": {
+                        "directory": "C:\\My Web Sites\\web3.js\\Web3.js\\web3js.readthedocs.io\\en\\v1.2.11\\",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "node": {
+                        "directory": "C:\\My Web Sites\\Node.js\\Node.js v15.11.0 Docs\\nodejs.org\\docs\\latest\\api",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                },
+                {
+                    "react-bootstrap": {
+                        "directory": "C:\\Users\\Manny\\Desktop\\react-bootstrap-master\\www\\public",
+                        "indexFile": [
+                            "index.htm",
+                            "index.html"
+                        ]
+                    }
+                }
+            ],
+            "status": "stopped",
+            "options": {
+                "dotfiles": "ignore",
+                "etag": false,
+                "extensions": [
+                    "htm",
+                    "html"
+                ],
+                "index": "index.html"
+            },
+            "startStamp": null,
+            "endStamp": 1632434977988,
+            "totalVisits": 637
+        },
+        {
+            "name": " edu",
+            "port": 3010,
+            "strings": [],
+            "status": "stopped",
+            "options": {
+                "dotfiles": "ignore",
+                "etag": false,
+                "extensions": [
+                    "htm",
+                    "html"
+                ],
+                "index": "index.html"
+            },
+            "startStamp": null,
+            "endStamp": null,
+            "totalVisits": 0
+        },
+        {
+            "name": "gamedocs",
+            "port": 7000,
+            "strings": [],
+            "status": "stopped",
+            "options": {
+                "dotfiles": "ignore",
+                "etag": false,
+                "extensions": [
+                    "htm",
+                    "html"
+                ],
+                "index": "index.html"
+            },
+            "startStamp": null,
+            "endStamp": null,
+            "totalVisits": 0
+        }
+    ],
+    "strings": []
+}

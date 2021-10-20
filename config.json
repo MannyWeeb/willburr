@@ -1,11 +1,10 @@
 {
     "willburr-web" : {
         "port" : 55432,
-
         "modules" : {
             "filehub" : {
                 "enabled" : true,
-                "rootDir" : "C:/Users/Manny/Music",
+                "rootDir" : "C:/Users/Manny/Desktop/Manny",
                 "thumbnailCache" : "../../static/filehub/root"
             },
             "smalltalk" : {
